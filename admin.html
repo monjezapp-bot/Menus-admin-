@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>منجز — لوحة صاحب المنصة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --ink-950:#151311;
+    --ink-900:#1E1B17;
+    --ink-850:#242019;
+    --ink-800:#2C271E;
+    --hairline:#332D22;
+    --ember:#FF6B00;
+    --ember-600:#E35A00;
+    --ember-glow:rgba(255,107,0,.18);
+    --sand:#F4EFE7;
+    --muted:#9C9488;
+    --muted-dim:#726B60;
+    --mint:#3ECF8E;
+    --mint-dim:rgba(62,207,142,.14);
+    --rose:#FF5C5C;
+    --rose-dim:rgba(255,92,92,.14);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; background:var(--ink-950); color:var(--sand); font-family:'IBM Plex Sans Arabic',sans-serif; min-height:100vh;}
+  h1,h2,h3,.display{font-family:'Cairo',sans-serif;}
+  ::selection{background:var(--ember); color:#fff;}
+  a{color:inherit; text-decoration:none;}
+  button{font-family:inherit; cursor:pointer;}
+  :focus-visible{outline:2px solid var(--ember); outline-offset:2px; border-radius:6px;}
+  ::-webkit-scrollbar{height:8px; width:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--ink-800); border-radius:8px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+
+  .num{font-variant-numeric:tabular-nums; direction:ltr; unicode-bidi:isolate; display:inline-block;}
+
+  /* ---------- Login ---------- */
+  #login-screen{
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
+    background:
+      radial-gradient(circle at 20% 15%, var(--ember-glow), transparent 45%),
+      radial-gradient(circle at 85% 80%, rgba(62,207,142,.08), transparent 40%),
+      var(--ink-950);
+  }
+  .login-card{
+    width:100%; max-width:380px; background:var(--ink-900); border:1px solid var(--hairline);
+    border-radius:20px; padding:36px 28px; box-shadow:0 30px 60px -20px rgba(0,0,0,.6);
+  }
+  .brand-mark{
+    width:56px; height:56px; border-radius:14px; background:var(--ember);
+    display:flex; align-items:center; justify-content:center; font-family:'Cairo'; font-weight:900;
+    font-size:22px; color:#fff; margin-bottom:18px; letter-spacing:-1px;
+  }
+  .login-card h1{font-size:22px; font-weight:800; margin:0 0 6px;}
+  .login-card p.sub{color:var(--muted); font-size:14px; margin:0 0 26px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-size:13px; color:var(--muted); margin-bottom:6px;}
+  .field input{
+    width:100%; background:var(--ink-850); border:1px solid var(--hairline); color:var(--sand);
+    border-radius:10px; padding:12px 14px; font-size:15px; font-family:inherit;
+  }
+  .field input:focus{border-color:var(--ember);}
+  .btn-primary{
+    width:100%; background:var(--ember); color:#fff; border:none; border-radius:10px;
+    padding:13px; font-size:15px; font-weight:700; margin-top:6px; transition:background .15s;
+  }
+  .btn-primary:hover{background:var(--ember-600);}
+  .btn-primary:disabled{opacity:.6; cursor:default;}
+  .login-error{
+    background:var(--rose-dim); color:var(--rose); border:1px solid rgba(255,92,92,.3);
+    border-radius:10px; padding:10px 12px; font-size:13px; margin-bottom:14px; display:none;
+  }
+
+  /* ---------- App shell ---------- */
+  #app{display:none; min-height:100vh;}
+  header.topbar{
+    position:sticky; top:0; z-index:30; display:flex; align-items:center; justify-content:space-between;
+    padding:14px 22px; background:rgba(21,19,17,.85); backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--hairline);
+  }
+  .topbar-brand{display:flex; align-items:center; gap:10px;}
+  .topbar-brand .mark{width:32px; height:32px; border-radius:9px; background:var(--ember); display:flex; align-items:center; justify-content:center; font-family:'Cairo'; font-weight:900; font-size:14px; color:#fff;}
+  .topbar-brand span{font-family:'Cairo'; font-weight:800; font-size:16px;}
+  .topbar-brand small{display:block; color:var(--muted); font-size:11px; font-weight:400; font-family:'IBM Plex Sans Arabic';}
+  .logout-btn{background:transparent; border:1px solid var(--hairline); color:var(--muted); border-radius:9px; padding:8px 14px; font-size:13px;}
+  .logout-btn:hover{color:var(--sand); border-color:var(--muted-dim);}
+
+  main{max-width:1180px; margin:0 auto; padding:26px 20px 60px;}
+
+  /* ---------- KPI hero ---------- */
+  .kpi-grid{display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:14px; margin-bottom:34px;}
+  @media(max-width:860px){.kpi-grid{grid-template-columns:1fr 1fr;}}
+  .kpi-card{background:var(--ink-900); border:1px solid var(--hairline); border-radius:16px; padding:20px;}
+  .kpi-hero{background:linear-gradient(135deg, var(--ink-900), var(--ink-850)); position:relative; overflow:hidden;}
+  .kpi-hero::before{content:''; position:absolute; inset:0; background:radial-gradient(circle at 100% 0%, var(--ember-glow), transparent 55%);}
+  .kpi-label{color:var(--muted); font-size:12.5px; margin-bottom:10px; position:relative;}
+  .kpi-value{font-family:'Cairo'; font-weight:800; font-size:30px; position:relative;}
+  .kpi-hero .kpi-value{font-size:36px;}
+  .kpi-unit{font-size:14px; color:var(--muted); font-weight:600; margin-inline-start:4px;}
+  .kpi-delta{display:inline-flex; align-items:center; gap:4px; font-size:12.5px; font-weight:700; margin-top:10px; padding:3px 9px; border-radius:99px; position:relative;}
+  .kpi-delta.up{color:var(--mint); background:var(--mint-dim);}
+  .kpi-delta.down{color:var(--rose); background:var(--rose-dim);}
+
+  /* ---------- Section headers ---------- */
+  .section-head{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:14px;}
+  .section-head h2{font-size:17px; font-weight:800; margin:0;}
+  .section-head p{color:var(--muted); font-size:12.5px; margin:2px 0 0;}
+
+  /* ---------- Growth ribbon (signature element) ---------- */
+  .ribbon-wrap{margin-bottom:38px;}
+  .ribbon{display:flex; gap:14px; overflow-x:auto; padding:4px 2px 14px; scroll-snap-type:x proximity;}
+  .growth-card{
+    scroll-snap-align:start; flex:0 0 240px; background:var(--ink-900); border:1px solid var(--hairline);
+    border-radius:16px; padding:18px; cursor:pointer; transition:border-color .15s, transform .15s;
+  }
+  .growth-card:hover{border-color:var(--ember); transform:translateY(-2px);}
+  .gc-top{display:flex; align-items:center; gap:10px; margin-bottom:14px;}
+  .gc-logo{width:38px; height:38px; border-radius:10px; background:var(--ink-800); object-fit:cover; flex:none;}
+  .gc-logo-fallback{width:38px; height:38px; border-radius:10px; background:var(--ink-800); display:flex; align-items:center; justify-content:center; font-family:Cairo; font-weight:800; font-size:15px; color:var(--muted); flex:none;}
+  .gc-name{font-weight:700; font-size:14.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .gc-status{font-size:11px; color:var(--muted-dim);}
+  .gc-rev{font-family:Cairo; font-weight:800; font-size:20px; margin-bottom:2px;}
+  .gc-rev-label{font-size:11.5px; color:var(--muted); margin-bottom:12px;}
+  .sparkline{display:block; margin-bottom:10px;}
+  .gc-badge{display:inline-flex; align-items:center; gap:4px; font-size:12px; font-weight:700; padding:3px 9px; border-radius:99px;}
+  .gc-badge.up{color:var(--mint); background:var(--mint-dim);}
+  .gc-badge.down{color:var(--rose); background:var(--rose-dim);}
+  .gc-badge.new{color:var(--ember); background:var(--ember-glow);}
+
+  /* ---------- Merchants table ---------- */
+  .search-input{
+    background:var(--ink-900); border:1px solid var(--hairline); color:var(--sand); border-radius:10px;
+    padding:9px 14px; font-size:13.5px; width:220px; font-family:inherit;
+  }
+  .merchant-table{width:100%; border-collapse:collapse; background:var(--ink-900); border:1px solid var(--hairline); border-radius:16px; overflow:hidden;}
+  .merchant-table th{text-align:right; font-size:12px; color:var(--muted); font-weight:600; padding:14px 16px; border-bottom:1px solid var(--hairline);}
+  .merchant-table td{padding:14px 16px; border-bottom:1px solid var(--hairline); font-size:14px;}
+  .merchant-table tr:last-child td{border-bottom:none;}
+  .merchant-table tr.row-clickable:hover{background:var(--ink-850); cursor:pointer;}
+  .m-name-cell{display:flex; align-items:center; gap:10px;}
+  .status-dot{width:7px; height:7px; border-radius:99px; flex:none;}
+  .status-dot.open{background:var(--mint);}
+  .status-dot.closed{background:var(--muted-dim);}
+  .table-wrap{overflow-x:auto; border-radius:16px;}
+  @media(max-width:700px){ .merchant-table{font-size:12.5px;} .merchant-table th, .merchant-table td{padding:10px;} .search-input{width:150px;} }
+
+  /* ---------- Detail drawer ---------- */
+  #overlay{position:fixed; inset:0; background:rgba(10,9,8,.6); backdrop-filter:blur(2px); z-index:40; display:none;}
+  #drawer{
+    position:fixed; top:0; bottom:0; left:0; width:min(480px, 92vw); background:var(--ink-950); border-inline-end:1px solid var(--hairline);
+    z-index:41; transform:translateX(-100%); transition:transform .25s ease; overflow-y:auto; padding:22px;
+  }
+  #drawer.active{transform:translateX(0);}
+  #overlay.active{display:block;}
+  .drawer-close{background:var(--ink-900); border:1px solid var(--hairline); width:32px; height:32px; border-radius:9px; color:var(--muted); font-size:16px; display:flex; align-items:center; justify-content:center;}
+  .drawer-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:22px;}
+  .drawer-title{display:flex; align-items:center; gap:12px;}
+  .drawer-title img, .gc-logo-fallback{width:44px; height:44px; border-radius:12px;}
+  .drawer-title h3{font-size:18px; margin:0 0 3px;}
+  .drawer-title .slug{font-size:12px; color:var(--muted);}
+  .mini-stats{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:26px;}
+  .mini-stat{background:var(--ink-900); border:1px solid var(--hairline); border-radius:12px; padding:14px;}
+  .mini-stat .l{font-size:11.5px; color:var(--muted); margin-bottom:6px;}
+  .mini-stat .v{font-family:Cairo; font-weight:800; font-size:18px;}
+  .drawer h4{font-size:13px; color:var(--muted); font-weight:700; margin:24px 0 12px; text-transform:uppercase; letter-spacing:.03em;}
+  .top-product{display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--hairline); font-size:13.5px;}
+  .top-product:last-child{border-bottom:none;}
+  .tp-rank{color:var(--ember); font-weight:800; font-family:Cairo; margin-inline-end:8px; width:18px; display:inline-block;}
+  .order-row{display:flex; align-items:center; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--hairline); font-size:13px;}
+  .order-row:last-child{border-bottom:none;}
+  .order-row .oid{color:var(--muted);}
+  .badge-status{font-size:11px; padding:3px 8px; border-radius:99px; font-weight:600;}
+  .visit-link{display:inline-flex; align-items:center; gap:6px; margin-top:20px; font-size:13px; color:var(--ember); border:1px solid var(--hairline); padding:9px 14px; border-radius:10px; width:100%; justify-content:center;}
+  .visit-link:hover{border-color:var(--ember);}
+
+  .empty-state{text-align:center; padding:60px 20px; color:var(--muted);}
+  .loader{display:flex; align-items:center; justify-content:center; min-height:60vh; color:var(--muted); font-size:14px;}
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important; animation:none !important;} }
+</style>
+</head>
+<body>
+
+<!-- ================= LOGIN ================= -->
+<div id="login-screen">
+  <form class="login-card" id="login-form" autocomplete="off">
+    <div class="brand-mark">Mz</div>
+    <h1>لوحة صاحب المنصة</h1>
+    <p class="sub">دخول خاص لإدارة ومتابعة أداء منجز — غير متاح للتجار</p>
+    <div class="login-error" id="login-error"></div>
+    <div class="field">
+      <label>البريد الإلكتروني</label>
+      <input type="email" id="email" required autocomplete="username">
+    </div>
+    <div class="field">
+      <label>كلمة المرور</label>
+      <input type="password" id="password" required autocomplete="current-password">
+    </div>
+    <button type="submit" class="btn-primary" id="login-btn">تسجيل الدخول</button>
+  </form>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="app">
+  <header class="topbar">
+    <div class="topbar-brand">
+      <div class="mark">Mz</div>
+      <div>
+        <span>منجز</span>
+        <small>لوحة صاحب المنصة</small>
+      </div>
+    </div>
+    <button class="logout-btn" id="logout-btn">تسجيل الخروج</button>
+  </header>
+
+  <main>
+    <div id="loader" class="loader">جاري تحميل بيانات المنصة…</div>
+
+    <div id="content" style="display:none;">
+      <!-- KPI hero -->
+      <div class="kpi-grid">
+        <div class="kpi-card kpi-hero">
+          <div class="kpi-label">إجمالي مبيعات الشهر الحالي</div>
+          <div class="kpi-value"><span class="num" id="kpi-revenue">0</span><span class="kpi-unit">ج.م</span></div>
+          <div class="kpi-delta" id="kpi-revenue-delta"></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">عدد التجار النشطين</div>
+          <div class="kpi-value"><span class="num" id="kpi-merchants">0</span></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">إجمالي الطلبات</div>
+          <div class="kpi-value"><span class="num" id="kpi-orders">0</span></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">متوسط قيمة الطلب</div>
+          <div class="kpi-value"><span class="num" id="kpi-aov">0</span><span class="kpi-unit">ج.م</span></div>
+        </div>
+      </div>
+
+      <!-- Growth ribbon -->
+      <div class="ribbon-wrap">
+        <div class="section-head">
+          <div>
+            <h2>نمو التجار 📈</h2>
+            <p>مقارنة مبيعات كل تاجر بالشهر اللي فات — دليل واضح على تحسّن الأداء</p>
+          </div>
+        </div>
+        <div class="ribbon" id="ribbon"></div>
+      </div>
+
+      <!-- Merchants table -->
+      <div class="section-head">
+        <div>
+          <h2>كل التجار</h2>
+          <p>اضغط على أي تاجر لعرض التفاصيل الكاملة</p>
+        </div>
+        <input class="search-input" id="search" placeholder="ابحث عن تاجر...">
+      </div>
+      <div class="table-wrap">
+        <table class="merchant-table">
+          <thead>
+            <tr>
+              <th>التاجر</th>
+              <th>مبيعات الشهر</th>
+              <th>النمو</th>
+              <th>الطلبات</th>
+              <th>التقييم</th>
+            </tr>
+          </thead>
+          <tbody id="merchant-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="overlay"></div>
+<div id="drawer"></div>
+
+<script>
+const SUPABASE_URL = "https://pcmyugeqveyjnappulng.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBjbXl1Z2VxdmV5am5hcHB1bG5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNjU0NDAsImV4cCI6MjA5Njc0MTQ0MH0.uwn0X4CvNRW38FGh_0rYD9KjBRM19CydXucfBsCDYeo";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const MONTHS_BACK = 6;
+const STATUS_LABELS = {
+  pending:'قيد الانتظار', confirmed:'مؤكد', ready:'جاهز',
+  delivering:'قيد التوصيل', delivered:'تم التسليم', cancelled:'ملغي'
+};
+const STATUS_COLORS = {
+  pending:'#9C9488', confirmed:'#3ECF8E', ready:'#3ECF8E',
+  delivering:'#FF6B00', delivered:'#3ECF8E', cancelled:'#FF5C5C'
+};
+
+let state = { restaurants: [], orders: [], monthKeys: [], merchantStats: [] };
+
+// ---------- helpers ----------
+function fmt(n){ return Math.round(n||0).toLocaleString('en-US'); }
+function monthKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function lastNMonthKeys(n){
+  const keys=[]; const now=new Date();
+  for(let i=n-1;i>=0;i--){ const d=new Date(now.getFullYear(), now.getMonth()-i, 1); keys.push(monthKey(d)); }
+  return keys;
+}
+function initials(name){ return (name||'؟').trim().slice(0,2); }
+
+function sparklineSVG(values, opts={}){
+  const w = opts.w||200, h = opts.h||46, color = opts.color||'#FF6B00';
+  const max = Math.max(...values, 1), min = Math.min(...values, 0);
+  const range = (max-min)||1;
+  const step = w/(values.length-1||1);
+  const pts = values.map((v,i)=>{
+    const x = i*step;
+    const y = h - ((v-min)/range)*h;
+    return [x,y];
+  });
+  const line = pts.map(p=>p.join(',')).join(' ');
+  const area = `0,${h} ${line} ${w},${h}`;
+  const last = pts[pts.length-1];
+  const gid = 'g'+Math.random().toString(36).slice(2,8);
+  return `<svg class="sparkline" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${color}" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+    </linearGradient></defs>
+    <polygon points="${area}" fill="url(#${gid})"/>
+    <polyline points="${line}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${last[0]}" cy="${last[1]}" r="3" fill="${color}"/>
+  </svg>`;
+}
+
+function growthBadge(growth, isNew){
+  if(isNew) return `<span class="gc-badge new">✨ جديد</span>`;
+  if(growth===null) return `<span class="gc-badge">—</span>`;
+  const up = growth>=0;
+  const arrow = up?'▲':'▼';
+  return `<span class="gc-badge ${up?'up':'down'}">${arrow} ${Math.abs(growth).toFixed(0)}%</span>`;
+}
+
+// ---------- auth ----------
+document.getElementById('login-form').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const btn = document.getElementById('login-btn');
+  const errBox = document.getElementById('login-error');
+  errBox.style.display='none';
+  btn.disabled = true; btn.textContent = 'جاري الدخول...';
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if(error){
+    errBox.textContent = 'بيانات الدخول غير صحيحة';
+    errBox.style.display='block';
+    btn.disabled=false; btn.textContent='تسجيل الدخول';
+    return;
+  }
+
+  const { data: adminRow } = await sb.from('platform_admins').select('user_id').eq('user_id', data.user.id).maybeSingle();
+  if(!adminRow){
+    errBox.textContent = 'هذا الحساب غير مصرح له بدخول لوحة المنصة';
+    errBox.style.display='block';
+    await sb.auth.signOut();
+    btn.disabled=false; btn.textContent='تسجيل الدخول';
+    return;
+  }
+
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  loadDashboard();
+});
+
+document.getElementById('logout-btn').addEventListener('click', async ()=>{
+  await sb.auth.signOut();
+  location.reload();
+});
+
+// ---------- data loading ----------
+async function loadDashboard(){
+  state.monthKeys = lastNMonthKeys(MONTHS_BACK);
+  const sinceDate = new Date(); sinceDate.setMonth(sinceDate.getMonth()-(MONTHS_BACK-1)); sinceDate.setDate(1);
+
+  const [{ data: restaurants, error: rErr }, { data: orders, error: oErr }] = await Promise.all([
+    sb.from('restaurants').select('id,name,slug,logo_url,is_active,is_open,rating,whatsapp,created_at'),
+    sb.from('orders').select('id,restaurant_id,order_number,total,status,items,created_at').gte('created_at', sinceDate.toISOString())
+  ]);
+
+  if(rErr || oErr){
+    document.getElementById('loader').textContent = 'حدث خطأ أثناء تحميل البيانات';
+    console.error(rErr||oErr);
+    return;
+  }
+
+  state.restaurants = restaurants||[];
+  state.orders = (orders||[]).filter(o=>o.status!=='cancelled');
+  computeMerchantStats();
+  renderKPIs();
+  renderRibbon();
+  renderTable();
+
+  document.getElementById('loader').style.display='none';
+  document.getElementById('content').style.display='block';
+}
+
+function computeMerchantStats(){
+  const keys = state.monthKeys;
+  state.merchantStats = state.restaurants.map(r=>{
+    const rOrders = state.orders.filter(o=>o.restaurant_id===r.id);
+    const monthly = keys.map(k => rOrders.filter(o=>monthKey(new Date(o.created_at))===k).reduce((s,o)=>s+Number(o.total||0),0));
+    const current = monthly[monthly.length-1];
+    const prev = monthly[monthly.length-2];
+    const isNew = prev===0 && current>0;
+    const growth = prev>0 ? ((current-prev)/prev)*100 : (current>0 ? 100 : null);
+    return {
+      restaurant:r, monthly, current, prev, growth, isNew,
+      orderCount: rOrders.length,
+      totalRevenue: monthly.reduce((a,b)=>a+b,0),
+      orders: rOrders
+    };
+  });
+}
+
+function renderKPIs(){
+  const keys = state.monthKeys;
+  const currentKey = keys[keys.length-1], prevKey = keys[keys.length-2];
+  const currentTotal = state.orders.filter(o=>monthKey(new Date(o.created_at))===currentKey).reduce((s,o)=>s+Number(o.total||0),0);
+  const prevTotal = state.orders.filter(o=>monthKey(new Date(o.created_at))===prevKey).reduce((s,o)=>s+Number(o.total||0),0);
+  const growth = prevTotal>0 ? ((currentTotal-prevTotal)/prevTotal)*100 : null;
+
+  document.getElementById('kpi-revenue').textContent = fmt(currentTotal);
+  const deltaEl = document.getElementById('kpi-revenue-delta');
+  if(growth===null){ deltaEl.style.display='none'; }
+  else{
+    deltaEl.style.display='inline-flex';
+    deltaEl.className = 'kpi-delta ' + (growth>=0?'up':'down');
+    deltaEl.textContent = (growth>=0?'▲ ':'▼ ') + Math.abs(growth).toFixed(0) + '% عن الشهر اللي فات';
+  }
+
+  document.getElementById('kpi-merchants').textContent = fmt(state.restaurants.filter(r=>r.is_active).length);
+  document.getElementById('kpi-orders').textContent = fmt(state.orders.length);
+  const aov = state.orders.length ? state.orders.reduce((s,o)=>s+Number(o.total||0),0)/state.orders.length : 0;
+  document.getElementById('kpi-aov').textContent = fmt(aov);
+}
+
+function renderRibbon(){
+  const sorted = [...state.merchantStats].sort((a,b)=> (b.growth??999) - (a.growth??999));
+  const ribbon = document.getElementById('ribbon');
+  ribbon.innerHTML = sorted.map(m=>{
+    const r = m.restaurant;
+    const logo = r.logo_url
+      ? `<img class="gc-logo" src="${r.logo_url}" alt="">`
+      : `<div class="gc-logo-fallback">${initials(r.name)}</div>`;
+    return `<div class="growth-card" data-id="${r.id}">
+      <div class="gc-top">
+        ${logo}
+        <div style="overflow:hidden">
+          <div class="gc-name">${r.name}</div>
+          <div class="gc-status">${r.is_open? 'شغّال دلوقتي':'مقفول حالياً'}</div>
+        </div>
+      </div>
+      <div class="gc-rev">${fmt(m.current)} <span style="font-size:12px;color:var(--muted)">ج.م</span></div>
+      <div class="gc-rev-label">مبيعات الشهر الحالي</div>
+      ${sparklineSVG(m.monthly, {color: m.growth>=0||m.isNew ? '#3ECF8E' : '#FF6B00'})}
+      ${growthBadge(m.growth, m.isNew)}
+    </div>`;
+  }).join('') || `<div class="empty-state">لسه مفيش بيانات مبيعات كافية</div>`;
+
+  ribbon.querySelectorAll('.growth-card').forEach(card=>{
+    card.addEventListener('click', ()=> openDrawer(card.dataset.id));
+  });
+}
+
+function renderTable(filter=''){
+  const tbody = document.getElementById('merchant-tbody');
+  const f = filter.trim().toLowerCase();
+  const rows = state.merchantStats
+    .filter(m=> !f || m.restaurant.name.toLowerCase().includes(f))
+    .sort((a,b)=> b.current - a.current);
+
+  tbody.innerHTML = rows.map(m=>{
+    const r = m.restaurant;
+    return `<tr class="row-clickable" data-id="${r.id}">
+      <td>
+        <div class="m-name-cell">
+          <span class="status-dot ${r.is_open?'open':'closed'}"></span>
+          <span>${r.name}</span>
+        </div>
+      </td>
+      <td class="num">${fmt(m.current)} ج.م</td>
+      <td>${growthBadge(m.growth, m.isNew)}</td>
+      <td class="num">${fmt(m.orderCount)}</td>
+      <td class="num">⭐ ${Number(r.rating||5).toFixed(1)}</td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="5" class="empty-state">مفيش نتائج</td></tr>`;
+
+  tbody.querySelectorAll('tr[data-id]').forEach(row=>{
+    row.addEventListener('click', ()=> openDrawer(row.dataset.id));
+  });
+}
+
+document.getElementById('search').addEventListener('input', (e)=> renderTable(e.target.value));
+
+// ---------- drawer ----------
+function computeTopProducts(orders){
+  const map = {};
+  orders.forEach(o=>{
+    (o.items||[]).forEach(it=>{
+      const name = it.name || 'منتج';
+      const qty = Number(it.quantity ?? it.qty ?? 1);
+      const price = Number(it.price ?? 0);
+      if(!map[name]) map[name] = { name, qty:0, revenue:0 };
+      map[name].qty += qty;
+      map[name].revenue += qty*price;
+    });
+  });
+  return Object.values(map).sort((a,b)=>b.revenue-a.revenue).slice(0,5);
+}
+
+function openDrawer(id){
+  const m = state.merchantStats.find(m=>m.restaurant.id===id);
+  if(!m) return;
+  const r = m.restaurant;
+  const topProducts = computeTopProducts(m.orders);
+  const recentOrders = [...m.orders].sort((a,b)=> new Date(b.created_at)-new Date(a.created_at)).slice(0,8);
+
+  const logo = r.logo_url
+    ? `<img src="${r.logo_url}" alt="">`
+    : `<div class="gc-logo-fallback">${initials(r.name)}</div>`;
+
+  document.getElementById('drawer').innerHTML = `
+    <div class="drawer-head">
+      <div class="drawer-title">
+        ${logo}
+        <div>
+          <h3>${r.name}</h3>
+          <div class="slug">/${r.slug}</div>
+        </div>
+      </div>
+      <button class="drawer-close" id="drawer-close">✕</button>
+    </div>
+
+    <div style="margin-bottom:20px">${sparklineSVG(m.monthly,{w:436,h:70,color:'#FF6B00'})}</div>
+
+    <div class="mini-stats">
+      <div class="mini-stat"><div class="l">مبيعات الشهر</div><div class="v num">${fmt(m.current)} ج.م</div></div>
+      <div class="mini-stat"><div class="l">النمو عن الشهر اللي فات</div><div class="v">${growthBadge(m.growth, m.isNew)}</div></div>
+      <div class="mini-stat"><div class="l">إجمالي الطلبات</div><div class="v num">${fmt(m.orderCount)}</div></div>
+      <div class="mini-stat"><div class="l">التقييم</div><div class="v">⭐ ${Number(r.rating||5).toFixed(1)}</div></div>
+    </div>
+
+    <h4>أكثر المنتجات مبيعاً</h4>
+    ${topProducts.map((p,i)=>`
+      <div class="top-product">
+        <span><span class="tp-rank">${i+1}</span>${p.name}</span>
+        <span class="num">${fmt(p.revenue)} ج.م</span>
+      </div>`).join('') || `<div class="empty-state" style="padding:20px 0">مفيش بيانات منتجات كفاية</div>`}
+
+    <h4>أحدث الطلبات</h4>
+    ${recentOrders.map(o=>`
+      <div class="order-row">
+        <span class="oid">${o.order_number||('#'+o.id.slice(0,6))}</span>
+        <span class="badge-status" style="color:${STATUS_COLORS[o.status]||'#9C9488'}; background:${(STATUS_COLORS[o.status]||'#9C9488')+'22'}">${STATUS_LABELS[o.status]||o.status}</span>
+        <span class="num">${fmt(o.total)} ج.م</span>
+      </div>`).join('') || `<div class="empty-state" style="padding:20px 0">لا يوجد طلبات في هذه الفترة</div>`}
+
+    <a class="visit-link" href="https://monjezapp-bot.github.io/menu-app/?r=${r.slug}" target="_blank" rel="noopener">🔗 عرض المنيو الفعلي</a>
+  `;
+
+  document.getElementById('drawer-close').addEventListener('click', closeDrawer);
+  document.getElementById('drawer').classList.add('active');
+  document.getElementById('overlay').classList.add('active');
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('active');
+  document.getElementById('overlay').classList.remove('active');
+}
+document.getElementById('overlay').addEventListener('click', closeDrawer);
+
+// ---------- session check on load ----------
+(async ()=>{
+  const { data: { session } } = await sb.auth.getSession();
+  if(session){
+    const { data: adminRow } = await sb.from('platform_admins').select('user_id').eq('user_id', session.user.id).maybeSingle();
+    if(adminRow){
+      document.getElementById('login-screen').style.display='none';
+      document.getElementById('app').style.display='block';
+      loadDashboard();
+    } else {
+      await sb.auth.signOut();
+    }
+  }
+})();
+</script>
+</body>
+</html>
