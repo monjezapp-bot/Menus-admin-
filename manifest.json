@@ -1,7 +1,7 @@
 {
-  "name": "منيوز — لوحة تحكم المنصة",
-  "short_name": "منيوز أدمن",
-  "description": "لوحة متابعة أداء التجار ومبيعات منصة منيوز",
+  "name": "Menus — لوحة صاحب المنصة",
+  "short_name": "Menus أدمن",
+  "description": "لوحة متابعة أداء التجار ومبيعات منصة Menus",
   "start_url": "./admin.html",
   "scope": "./",
   "display": "standalone",

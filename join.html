@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
-<title>منجز — انضم كتاجر</title>
+<title>Menus — انضم كتاجر</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -36,6 +36,13 @@
   .field input:focus, .field textarea:focus{border-color:var(--ember);}
   .field .hint{font-size:11.5px; color:var(--muted); margin-top:5px;}
   .slug-preview{font-size:12px; color:var(--ember); margin-top:5px; direction:ltr; text-align:right; unicode-bidi:isolate;}
+  .chips{display:flex; flex-wrap:wrap; gap:8px;}
+  .chip{background:var(--ink-850); border:1px solid var(--hairline); color:var(--muted); border-radius:99px; padding:8px 14px; font-size:13px; font-family:inherit; cursor:pointer; transition:.15s;}
+  .chip.active{background:var(--ember-glow); border-color:var(--ember); color:var(--ember); font-weight:700;}
+  .branch-row{display:flex; align-items:center; gap:10px;}
+  .branch-row input{width:90px; text-align:center;}
+  .branch-row .stepper{display:flex; border:1px solid var(--hairline); border-radius:10px; overflow:hidden;}
+  .branch-row .stepper button{background:var(--ink-850); border:none; color:var(--sand); width:38px; height:44px; font-size:18px;}
   .btn-primary{width:100%; background:var(--ember); color:#fff; border:none; border-radius:10px; padding:13px; font-size:15px; font-weight:700; margin-top:8px;}
   .btn-primary:hover{background:var(--ember-600);}
   .btn-primary:disabled{opacity:.6;}
@@ -54,7 +61,7 @@
   <div class="card">
     <div id="form-view">
       <div class="brand-mark">Mz</div>
-      <h1>انضم كتاجر على منجز</h1>
+      <h1>انضم كتاجر على Menus</h1>
       <p class="sub">املأ بياناتك وهنراجع طلبك، وبمجرد الموافقة تقدر تدخل لوحة التحكم بتاعتك بنفس الإيميل والباسورد اللي هتسجلهم دلوقتي.</p>
 
       <div class="msg error" id="form-error"></div>
@@ -68,6 +75,37 @@
         <div class="field">
           <label>رقم الواتساب</label>
           <input type="tel" id="whatsapp" placeholder="01xxxxxxxxx" required>
+        </div>
+        <div class="field">
+          <label>رقم التليفون</label>
+          <input type="tel" id="phone" placeholder="01xxxxxxxxx" required>
+        </div>
+        <div class="field">
+          <label>تصنيف المتجر (تقدر تختار أكتر من واحد)</label>
+          <div class="chips" id="category-chips">
+            <button type="button" class="chip" data-value="restaurant">مطعم</button>
+            <button type="button" class="chip" data-value="veggies">خضار وفاكهة</button>
+            <button type="button" class="chip" data-value="meat">لحوم ودواجن</button>
+            <button type="button" class="chip" data-value="supermarket">سوبر ماركت</button>
+            <button type="button" class="chip" data-value="clothes">ملابس وأحذية</button>
+            <button type="button" class="chip" data-value="home">أدوات منزلية</button>
+            <button type="button" class="chip" data-value="bookstore">مكتبة</button>
+            <button type="button" class="chip" data-value="office">أدوات مكتبية</button>
+            <button type="button" class="chip" data-value="electronics">إلكترونيات</button>
+            <button type="button" class="chip" data-value="all">الجميع</button>
+            <button type="button" class="chip" data-value="other">أخرى</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>عدد الفروع</label>
+          <div class="branch-row">
+            <div class="stepper">
+              <button type="button" id="branch-minus">−</button>
+              <input type="number" id="branch-count" value="1" min="1" readonly>
+              <button type="button" id="branch-plus">+</button>
+            </div>
+            <div class="hint" style="margin:0">لو فرع واحد بس، سيبها 1</div>
+          </div>
         </div>
         <div class="field">
           <label>البريد الإلكتروني (هتستخدمه للدخول)</label>
@@ -113,6 +151,23 @@ nameInput.addEventListener('input', ()=>{
   slugPreview.textContent = s ? ('رابط منيوك سيكون: ?r=' + s) : '';
 });
 
+const selectedCategories = new Set();
+document.querySelectorAll('.chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    chip.classList.toggle('active');
+    if(chip.classList.contains('active')) selectedCategories.add(chip.dataset.value);
+    else selectedCategories.delete(chip.dataset.value);
+  });
+});
+
+const branchInput = document.getElementById('branch-count');
+document.getElementById('branch-plus').addEventListener('click', ()=>{
+  branchInput.value = Number(branchInput.value) + 1;
+});
+document.getElementById('branch-minus').addEventListener('click', ()=>{
+  branchInput.value = Math.max(1, Number(branchInput.value) - 1);
+});
+
 document.getElementById('request-form').addEventListener('submit', async (e)=>{
   e.preventDefault();
   const btn = document.getElementById('submit-btn');
@@ -121,12 +176,19 @@ document.getElementById('request-form').addEventListener('submit', async (e)=>{
 
   const restaurantName = nameInput.value.trim();
   const whatsapp = document.getElementById('whatsapp').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const branchCount = Number(branchInput.value) || 1;
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
   const desiredSlug = slugify(restaurantName);
 
   if(!desiredSlug){
     errBox.textContent = 'من فضلك اكتب اسم مطعم صحيح';
+    errBox.style.display = 'block';
+    return;
+  }
+  if(selectedCategories.size === 0){
+    errBox.textContent = 'اختار تصنيف واحد على الأقل للمتجر';
     errBox.style.display = 'block';
     return;
   }
@@ -150,6 +212,9 @@ document.getElementById('request-form').addEventListener('submit', async (e)=>{
     restaurant_name: restaurantName,
     desired_slug: desiredSlug,
     whatsapp: whatsapp,
+    phone: phone,
+    categories: Array.from(selectedCategories),
+    branch_count: branchCount,
     owner_email: email
   });
 
