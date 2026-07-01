@@ -52,6 +52,10 @@
   .success-box .icon{width:56px; height:56px; border-radius:50%; background:var(--mint-dim); display:flex; align-items:center; justify-content:center; margin:0 auto 16px; font-size:26px;}
   .success-box h2{font-size:18px; margin:0 0 10px;}
   .success-box p{color:var(--muted); font-size:13.5px; line-height:1.8;}
+  .success-box .reassure{background:var(--ink-850); border:1px solid var(--hairline); border-radius:12px; padding:14px; margin:18px 0; font-size:13px; color:var(--sand); line-height:1.8;}
+  .ok-btn{width:100%; background:var(--ember); color:#fff; border:none; border-radius:10px; padding:13px; font-size:15px; font-weight:700; margin-top:6px;}
+  .ok-btn:hover{background:var(--ember-600);}
+  .ok-btn:disabled{opacity:.6;}
   #form-view.hidden, #success-view{display:none;}
   #success-view.active{display:block;}
 </style>
@@ -125,6 +129,10 @@
         <div class="icon">✅</div>
         <h2>تم استلام طلبك بنجاح</h2>
         <p>هنراجع بياناتك، وفور الموافقة تقدر تدخل لوحة التحكم بتاعتك بنفس الإيميل والباسورد اللي سجلتهم دلوقتي.</p>
+        <div class="reassure">
+          📞 هنتواصل معاك في أقرب وقت على رقم الواتساب اللي كتبته لتأكيد التفاصيل وتفعيل متجرك.
+        </div>
+        <button class="ok-btn" id="ok-btn">تمام، فهمت 👍</button>
       </div>
     </div>
   </div>
@@ -227,6 +235,12 @@ document.getElementById('request-form').addEventListener('submit', async (e)=>{
 
   document.getElementById('form-view').classList.add('hidden');
   document.getElementById('success-view').classList.add('active');
+});
+
+document.getElementById('ok-btn').addEventListener('click', ()=>{
+  const btn = document.getElementById('ok-btn');
+  btn.textContent = 'تقدر تقفل الصفحة دلوقتي ✓';
+  btn.disabled = true;
 });
 </script>
 </body>
