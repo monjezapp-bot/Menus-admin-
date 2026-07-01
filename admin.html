@@ -247,6 +247,17 @@
   .visit-link{display:inline-flex; align-items:center; gap:6px; margin-top:20px; font-size:13px; color:var(--ember); border:1px solid var(--hairline); padding:9px 14px; border-radius:10px; width:100%; justify-content:center;}
   .visit-link:hover{border-color:var(--ember);}
 
+  .cred-box{background:var(--ink-850); border:1px solid var(--hairline); border-radius:12px; padding:14px; margin-bottom:10px;}
+  .cred-box .cb-label{font-size:12.5px; color:var(--muted); margin-bottom:8px; display:block;}
+  .cred-row{display:flex; gap:8px;}
+  .cred-row input{flex:1; min-width:0; background:var(--ink-900); border:1px solid var(--hairline); color:var(--sand); border-radius:8px; padding:9px 11px; font-size:13.5px; font-family:inherit; direction:ltr; text-align:right;}
+  .cred-row button{flex:none; background:var(--ember); color:#fff; border:none; border-radius:8px; padding:0 14px; font-size:13px; font-weight:700;}
+  .cred-row button:hover{background:var(--ember-600);}
+  .cred-row button:disabled{opacity:.5;}
+  .cred-msg{font-size:11.5px; margin-top:8px; display:none;}
+  .cred-msg.ok{color:var(--mint); display:block;}
+  .cred-msg.err{color:var(--rose); display:block;}
+
   .empty-state{text-align:center; padding:60px 20px; color:var(--muted);}
   .loader{display:flex; align-items:center; justify-content:center; min-height:60vh; color:var(--muted); font-size:14px;}
   @media (prefers-reduced-motion: reduce){ *{transition:none !important; animation:none !important;} }
@@ -527,7 +538,7 @@ async function loadDashboard(){
   const sinceDate = new Date(); sinceDate.setMonth(sinceDate.getMonth()-(MONTHS_BACK-1)); sinceDate.setDate(1);
 
   const [{ data: restaurants, error: rErr }, { data: orders, error: oErr }] = await Promise.all([
-    sb.from('restaurants').select('id,name,slug,logo_url,is_active,is_open,rating,whatsapp,created_at'),
+    sb.from('restaurants').select('id,name,slug,logo_url,is_active,is_open,rating,whatsapp,phone,owner_email,categories,branch_count,subscription_plan,billing_cycle,subscription_price,subscription_status,created_at'),
     sb.from('orders').select('id,restaurant_id,order_number,total,status,items,created_at').gte('created_at', sinceDate.toISOString())
   ]);
 
@@ -849,12 +860,14 @@ function computeTopProducts(orders){
   return Object.values(map).sort((a,b)=>b.revenue-a.revenue).slice(0,5);
 }
 
-function openDrawer(id){
+async function openDrawer(id){
   const m = state.merchantStats.find(m=>m.restaurant.id===id);
   if(!m) return;
   const r = m.restaurant;
   const topProducts = computeTopProducts(m.orders);
   const recentOrders = [...m.orders].sort((a,b)=> new Date(b.created_at)-new Date(a.created_at)).slice(0,8);
+
+  const { data: branches } = await sb.from('branches').select('*').eq('restaurant_id', r.id).order('created_at');
 
   const logo = r.logo_url
     ? `<img src="${r.logo_url}" alt="">`
@@ -900,10 +913,63 @@ function openDrawer(id){
         <span class="num">${fmt(o.total)} ج.م</span>
       </div>`).join('') || `<div class="empty-state" style="padding:20px 0">لا يوجد طلبات في هذه الفترة</div>`}
 
+    <h4>إدارة كلمات السر</h4>
+    <div class="cred-box">
+      <span class="cb-label">صاحب المتجر (الحساب الرئيسي — ${r.owner_email || 'إيميل غير مسجل'})</span>
+      <div class="cred-row">
+        <input type="text" id="owner-pass-input" placeholder="كلمة سر جديدة (6 أحرف على الأقل)" enterkeyhint="done">
+        <button id="owner-pass-save" data-restaurant="${r.id}">تحديث</button>
+      </div>
+      <div class="cred-msg" id="owner-pass-msg"></div>
+    </div>
+
+    ${(branches||[]).map(b=>`
+      <div class="cred-box">
+        <span class="cb-label">كود دخول فرع: ${b.name}</span>
+        <div class="cred-row">
+          <input type="text" class="branch-pass-input" data-branch="${b.id}" value="${b.passcode||''}" placeholder="كود الدخول" enterkeyhint="done">
+          <button class="branch-pass-save" data-branch="${b.id}">تحديث</button>
+        </div>
+        <div class="cred-msg" data-branch-msg="${b.id}"></div>
+      </div>
+    `).join('')}
+
     <a class="visit-link" href="https://monjezapp-bot.github.io/menu-app/?r=${r.slug}" target="_blank" rel="noopener">🔗 عرض المنيو الفعلي</a>
   `;
 
   document.getElementById('drawer-close').addEventListener('click', closeDrawer);
+
+  document.getElementById('owner-pass-save').addEventListener('click', async (e)=>{
+    const btn = e.target;
+    const input = document.getElementById('owner-pass-input');
+    const msg = document.getElementById('owner-pass-msg');
+    const newPass = input.value.trim();
+    if(newPass.length < 6){
+      msg.className = 'cred-msg err'; msg.textContent = 'لازم 6 أحرف على الأقل';
+      return;
+    }
+    btn.disabled = true; btn.textContent = '...';
+    const { error } = await sb.rpc('admin_reset_owner_password', { p_restaurant_id: btn.dataset.restaurant, p_new_password: newPass });
+    btn.disabled = false; btn.textContent = 'تحديث';
+    if(error){ msg.className = 'cred-msg err'; msg.textContent = 'حصل خطأ: ' + error.message; }
+    else { msg.className = 'cred-msg ok'; msg.textContent = 'اتغيرت بنجاح ✓'; input.value=''; }
+  });
+
+  document.querySelectorAll('.branch-pass-save').forEach(btn=>{
+    btn.addEventListener('click', async (e)=>{
+      const branchId = btn.dataset.branch;
+      const input = document.querySelector(`.branch-pass-input[data-branch="${branchId}"]`);
+      const msg = document.querySelector(`[data-branch-msg="${branchId}"]`);
+      const newCode = input.value.trim();
+      if(!newCode){ msg.className='cred-msg err'; msg.textContent='اكتب كود مش فاضي'; return; }
+      btn.disabled = true; btn.textContent = '...';
+      const { error } = await sb.from('branches').update({ passcode: newCode }).eq('id', branchId);
+      btn.disabled = false; btn.textContent = 'تحديث';
+      if(error){ msg.className='cred-msg err'; msg.textContent='حصل خطأ: '+error.message; }
+      else { msg.className='cred-msg ok'; msg.textContent='اتغير بنجاح ✓'; }
+    });
+  });
+
   document.getElementById('drawer').classList.add('active');
   document.getElementById('overlay').classList.add('active');
   history.pushState({ drawer: true }, '');
