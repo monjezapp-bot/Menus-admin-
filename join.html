@@ -15,8 +15,8 @@
     --sand:#F4EFE7; --muted:#9C9488; --mint:#3ECF8E; --mint-dim:rgba(62,207,142,.14);
     --rose:#FF5C5C; --rose-dim:rgba(255,92,92,.14);
   }
-  *{box-sizing:border-box;}
-  html,body{margin:0; background:var(--ink-950); color:var(--sand); font-family:'IBM Plex Sans Arabic',sans-serif; min-height:100vh;}
+  *{box-sizing:border-box; min-width:0;}
+  html,body{margin:0; background:var(--ink-950); color:var(--sand); font-family:'IBM Plex Sans Arabic',sans-serif; min-height:100vh; overflow-x:hidden; width:100%;}
   h1,h2,.display{font-family:'Cairo',sans-serif;}
   :focus-visible{outline:2px solid var(--ember); outline-offset:2px; border-radius:6px;}
 
@@ -39,10 +39,11 @@
   .chips{display:flex; flex-wrap:wrap; gap:8px;}
   .chip{background:var(--ink-850); border:1px solid var(--hairline); color:var(--muted); border-radius:99px; padding:8px 14px; font-size:13px; font-family:inherit; cursor:pointer; transition:.15s;}
   .chip.active{background:var(--ember-glow); border-color:var(--ember); color:var(--ember); font-weight:700;}
-  .branch-row{display:flex; align-items:center; gap:10px;}
-  .branch-row input{width:90px; text-align:center;}
-  .branch-row .stepper{display:flex; border:1px solid var(--hairline); border-radius:10px; overflow:hidden;}
+  .branch-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .branch-row input{width:60px; text-align:center;}
+  .branch-row .stepper{display:flex; border:1px solid var(--hairline); border-radius:10px; overflow:hidden; flex:none;}
   .branch-row .stepper button{background:var(--ink-850); border:none; color:var(--sand); width:38px; height:44px; font-size:18px;}
+  .branch-row .hint{flex:1; min-width:120px;}
   .btn-primary{width:100%; background:var(--ember); color:#fff; border:none; border-radius:10px; padding:13px; font-size:15px; font-weight:700; margin-top:8px;}
   .btn-primary:hover{background:var(--ember-600);}
   .btn-primary:disabled{opacity:.6;}
@@ -241,6 +242,21 @@ document.getElementById('ok-btn').addEventListener('click', ()=>{
   const btn = document.getElementById('ok-btn');
   btn.textContent = 'تقدر تقفل الصفحة دلوقتي ✓';
   btn.disabled = true;
+});
+
+document.addEventListener('keydown', (e)=>{
+  if(e.key !== 'Enter') return;
+  const t = e.target;
+  if(!t.matches('input, select')) return;
+  if(t.closest('form')) return;
+  e.preventDefault();
+  t.blur();
+});
+
+document.addEventListener('focusin', (e)=>{
+  if(e.target.matches('input, select, textarea')){
+    setTimeout(()=> e.target.scrollIntoView({ block:'center', behavior:'smooth' }), 300);
+  }
 });
 </script>
 </body>

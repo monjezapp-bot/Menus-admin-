@@ -37,8 +37,8 @@
     --rose:#FF5C5C;
     --rose-dim:rgba(255,92,92,.14);
   }
-  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-  html,body{margin:0; padding:0; background:var(--ink-950); color:var(--sand); font-family:'IBM Plex Sans Arabic',sans-serif; min-height:100vh;}
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; min-width:0;}
+  html,body{margin:0; padding:0; background:var(--ink-950); color:var(--sand); font-family:'IBM Plex Sans Arabic',sans-serif; min-height:100vh; overflow-x:hidden; width:100%; scroll-padding-bottom:100px;}
   h1,h2,h3,.display{font-family:'Cairo',sans-serif;}
   ::selection{background:var(--ember); color:#fff;}
   a{color:inherit; text-decoration:none;}
@@ -131,9 +131,10 @@
   .req-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;}
   .req-name{font-weight:800; font-size:15.5px; font-family:'Cairo';}
   .req-date{font-size:11.5px; color:var(--muted-dim);}
-  .req-detail{display:flex; justify-content:space-between; font-size:13px; padding:6px 0; border-bottom:1px solid var(--hairline); color:var(--muted);}
+  .req-detail{display:flex; justify-content:space-between; gap:10px; font-size:13px; padding:6px 0; border-bottom:1px solid var(--hairline); color:var(--muted);}
   .req-detail:last-of-type{border-bottom:none;}
-  .req-detail span:last-child{color:var(--sand); direction:ltr; unicode-bidi:isolate;}
+  .req-detail span:first-child{flex:none;}
+  .req-detail span:last-child{color:var(--sand); direction:ltr; unicode-bidi:isolate; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;}
   .req-tags{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;}
   .req-tag{background:var(--ink-850); border:1px solid var(--hairline); color:var(--muted); font-size:11.5px; padding:4px 10px; border-radius:99px;}
   .req-actions{display:flex; gap:10px; margin-top:14px;}
@@ -142,8 +143,10 @@
   .req-btn.reject{background:transparent; border:1px solid var(--hairline); color:var(--rose);}
   .req-btn:disabled{opacity:.5;}
   .req-plan-row{display:flex; gap:10px; margin-top:14px;}
-  .req-plan-row select, .req-plan-row input{flex:1; background:var(--ink-850); border:1px solid var(--hairline); color:var(--sand); border-radius:10px; padding:10px 12px; font-size:13.5px; font-family:inherit;}
+  .req-plan-row > div{flex:1; min-width:0;}
+  .req-plan-row select, .req-plan-row input{width:100%; max-width:100%; background:var(--ink-850); border:1px solid var(--hairline); color:var(--sand); border-radius:10px; padding:10px 12px; font-size:13.5px; font-family:inherit;}
   .req-plan-label{font-size:11px; color:var(--muted); margin-bottom:5px; display:block;}
+  @media(max-width:380px){ .req-plan-row{flex-direction:column;} }
 
   /* ---------- Pricing page ---------- */
   .plan-group{background:var(--ink-900); border:1px solid var(--hairline); border-radius:16px; padding:18px; margin-bottom:16px;}
@@ -328,7 +331,7 @@
             <h2>كل التجار</h2>
             <p>اضغط على أي تاجر لعرض التفاصيل الكاملة</p>
           </div>
-          <input class="search-input" id="search" placeholder="ابحث عن تاجر...">
+          <input class="search-input" id="search" placeholder="ابحث عن تاجر..." enterkeyhint="search">
         </div>
         <div class="table-wrap">
           <table class="merchant-table">
@@ -369,18 +372,18 @@
 
         <div class="plan-group">
           <h3>باقة الفرع الواحد</h3>
-          <div class="plan-row"><label>شهري</label><div class="price-input-wrap"><input type="number" data-plan="single_branch" data-cycle="monthly"><span class="unit">ج.م</span></div></div>
-          <div class="plan-row"><label>كل 3 شهور</label><div class="price-input-wrap"><input type="number" data-plan="single_branch" data-cycle="quarterly"><span class="unit">ج.م</span></div></div>
-          <div class="plan-row"><label>كل 6 شهور</label><div class="price-input-wrap"><input type="number" data-plan="single_branch" data-cycle="biannual"><span class="unit">ج.م</span></div></div>
-          <div class="plan-row"><label>سنوي</label><div class="price-input-wrap"><input type="number" data-plan="single_branch" data-cycle="yearly"><span class="unit">ج.م</span></div></div>
+          <div class="plan-row"><label>شهري</label><div class="price-input-wrap"><input type="number" data-plan="single_branch" data-cycle="monthly" enterkeyhint="done"><span class="unit">ج.م</span></div></div>
+          <div class="plan-row"><label>كل 3 شهور</label><div class="price-input-wrap"><input type="number" data-plan="single_branch" data-cycle="quarterly" enterkeyhint="done"><span class="unit">ج.م</span></div></div>
+          <div class="plan-row"><label>كل 6 شهور</label><div class="price-input-wrap"><input type="number" data-plan="single_branch" data-cycle="biannual" enterkeyhint="done"><span class="unit">ج.م</span></div></div>
+          <div class="plan-row"><label>سنوي</label><div class="price-input-wrap"><input type="number" data-plan="single_branch" data-cycle="yearly" enterkeyhint="done"><span class="unit">ج.م</span></div></div>
         </div>
 
         <div class="plan-group">
           <h3>باقة أكتر من فرع</h3>
-          <div class="plan-row"><label>شهري</label><div class="price-input-wrap"><input type="number" data-plan="multi_branch" data-cycle="monthly"><span class="unit">ج.م</span></div></div>
-          <div class="plan-row"><label>كل 3 شهور</label><div class="price-input-wrap"><input type="number" data-plan="multi_branch" data-cycle="quarterly"><span class="unit">ج.م</span></div></div>
-          <div class="plan-row"><label>كل 6 شهور</label><div class="price-input-wrap"><input type="number" data-plan="multi_branch" data-cycle="biannual"><span class="unit">ج.م</span></div></div>
-          <div class="plan-row"><label>سنوي</label><div class="price-input-wrap"><input type="number" data-plan="multi_branch" data-cycle="yearly"><span class="unit">ج.م</span></div></div>
+          <div class="plan-row"><label>شهري</label><div class="price-input-wrap"><input type="number" data-plan="multi_branch" data-cycle="monthly" enterkeyhint="done"><span class="unit">ج.م</span></div></div>
+          <div class="plan-row"><label>كل 3 شهور</label><div class="price-input-wrap"><input type="number" data-plan="multi_branch" data-cycle="quarterly" enterkeyhint="done"><span class="unit">ج.م</span></div></div>
+          <div class="plan-row"><label>كل 6 شهور</label><div class="price-input-wrap"><input type="number" data-plan="multi_branch" data-cycle="biannual" enterkeyhint="done"><span class="unit">ج.م</span></div></div>
+          <div class="plan-row"><label>سنوي</label><div class="price-input-wrap"><input type="number" data-plan="multi_branch" data-cycle="yearly" enterkeyhint="done"><span class="unit">ج.م</span></div></div>
         </div>
 
         <button class="save-prices-btn" id="save-prices-btn">حفظ الأسعار</button>
@@ -509,6 +512,7 @@ document.getElementById('login-form').addEventListener('submit', async (e)=>{
 
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='block';
+  history.replaceState(null, '', '#overview');
   loadDashboard();
 });
 
@@ -692,7 +696,7 @@ async function loadRequests(){
         </div>
         <div style="flex:1">
           <span class="req-plan-label">السعر (ج.م)</span>
-          <input type="number" class="req-price" value="${defaultPrice}">
+          <input type="number" class="req-price" value="${defaultPrice}" enterkeyhint="done">
         </div>
       </div>
 
@@ -777,15 +781,49 @@ document.getElementById('save-prices-btn').addEventListener('click', async ()=>{
   setTimeout(()=> toast.style.display = 'none', 2500);
 });
 
-// ---------- bottom nav ----------
+// ---------- bottom nav (with proper back-button history) ----------
+const PAGE_TO_HASH = { 'page-overview':'overview', 'page-merchants':'merchants', 'page-requests':'requests', 'page-pricing':'pricing' };
+const HASH_TO_PAGE = { 'overview':'page-overview', 'merchants':'page-merchants', 'requests':'page-requests', 'pricing':'page-pricing' };
+
+function activatePage(pageId){
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const btn = document.querySelector(`.nav-btn[data-page="${pageId}"]`);
+  if(btn) btn.classList.add('active');
+  const page = document.getElementById(pageId);
+  if(page) page.classList.add('active');
+  window.scrollTo({top:0, behavior:'instant'});
+}
+
 document.querySelectorAll('.nav-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
-    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById(btn.dataset.page).classList.add('active');
-    window.scrollTo({top:0, behavior:'instant'});
+    const targetHash = PAGE_TO_HASH[btn.dataset.page];
+    if(location.hash.replace('#','') !== targetHash){
+      location.hash = targetHash; // pushes a real history entry -> back button steps through tabs
+    }
   });
+});
+
+window.addEventListener('hashchange', ()=>{
+  const h = location.hash.replace('#','') || 'overview';
+  activatePage(HASH_TO_PAGE[h] || 'page-overview');
+});
+
+// ---------- make the phone keyboard's Done/Go button work on standalone fields ----------
+document.addEventListener('keydown', (e)=>{
+  if(e.key !== 'Enter') return;
+  const t = e.target;
+  if(!t.matches('input, select')) return;
+  if(t.closest('form')) return; // forms handle their own submit on Enter
+  e.preventDefault();
+  t.blur();
+});
+
+// ---------- keep focused fields visible above keyboard / bottom-nav ----------
+document.addEventListener('focusin', (e)=>{
+  if(e.target.matches('input, select, textarea')){
+    setTimeout(()=> e.target.scrollIntoView({ block:'center', behavior:'smooth' }), 300);
+  }
 });
 
 // ---------- PWA service worker ----------
@@ -868,12 +906,25 @@ function openDrawer(id){
   document.getElementById('drawer-close').addEventListener('click', closeDrawer);
   document.getElementById('drawer').classList.add('active');
   document.getElementById('overlay').classList.add('active');
+  history.pushState({ drawer: true }, '');
 }
 function closeDrawer(){
+  const wasOpen = document.getElementById('drawer').classList.contains('active');
   document.getElementById('drawer').classList.remove('active');
   document.getElementById('overlay').classList.remove('active');
+  if(wasOpen && history.state && history.state.drawer){
+    history.back(); // consume the pushed state so the back-stack stays clean
+  }
 }
 document.getElementById('overlay').addEventListener('click', closeDrawer);
+
+window.addEventListener('popstate', (e)=>{
+  // Back button pressed while the drawer is open -> just close it, don't touch the page tabs.
+  if(document.getElementById('drawer').classList.contains('active')){
+    document.getElementById('drawer').classList.remove('active');
+    document.getElementById('overlay').classList.remove('active');
+  }
+});
 
 // ---------- session check on load ----------
 (async ()=>{
@@ -883,6 +934,7 @@ document.getElementById('overlay').addEventListener('click', closeDrawer);
     if(adminRow){
       document.getElementById('login-screen').style.display='none';
       document.getElementById('app').style.display='block';
+      history.replaceState(null, '', '#overview');
       loadDashboard();
     } else {
       await sb.auth.signOut();
