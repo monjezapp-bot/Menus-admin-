@@ -113,8 +113,9 @@
           </div>
         </div>
         <div class="field">
-          <label>البريد الإلكتروني (هتستخدمه للدخول)</label>
-          <input type="email" id="email" required>
+          <label>إيميل الدخول (بيتحدد تلقائي من اسم متجرك)</label>
+          <input type="text" id="email" readonly>
+          <div class="hint" id="email-hint">هتستخدم الإيميل ده كل مرة تدخل بيها لوحة التحكم</div>
         </div>
         <div class="field">
           <label>كلمة المرور (اختارها بنفسك)</label>
@@ -155,9 +156,13 @@ function slugify(name){
 
 const nameInput = document.getElementById('restaurant-name');
 const slugPreview = document.getElementById('slug-preview');
+const emailInput = document.getElementById('email');
+const EMAIL_DOMAIN = 'menus-owner.app';
+
 nameInput.addEventListener('input', ()=>{
   const s = slugify(nameInput.value);
-  slugPreview.textContent = s ? ('رابط منيوك سيكون: ?r=' + s) : '';
+  slugPreview.textContent = s ? ('رابط المنيو الخاص بك سيكون: ?r=' + s) : '';
+  emailInput.value = s ? (s + '@' + EMAIL_DOMAIN) : '';
 });
 
 const selectedCategories = new Set();
