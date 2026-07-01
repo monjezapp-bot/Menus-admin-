@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
-<title>منيوز — لوحة تحكم المنصة</title>
+<title>منجز — لوحة صاحب المنصة</title>
 
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
@@ -12,7 +12,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="منيوز أدمن">
+<meta name="apple-mobile-web-app-title" content="منجز أدمن">
 <meta name="mobile-web-app-capable" content="yes">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -118,11 +118,27 @@
   .nav-btn{
     flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
     background:none; border:none; color:var(--muted); padding:8px 4px; border-radius:12px; font-size:11.5px; font-family:inherit; font-weight:600;
-    transition:color .15s;
+    transition:color .15s; position:relative;
   }
   .nav-btn svg{width:22px; height:22px;}
   .nav-btn.active{color:var(--ember);}
   .nav-btn:active{background:var(--ink-900);}
+  .nav-badge{position:absolute; top:2px; inset-inline-start:calc(50% + 6px); background:var(--ember); color:#fff; font-size:10px; font-weight:800; min-width:16px; height:16px; border-radius:99px; display:none; align-items:center; justify-content:center; padding:0 3px;}
+  .nav-badge.show{display:flex;}
+
+  /* ---------- Requests ---------- */
+  .request-card{background:var(--ink-900); border:1px solid var(--hairline); border-radius:16px; padding:18px; margin-bottom:12px;}
+  .req-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;}
+  .req-name{font-weight:800; font-size:15.5px; font-family:'Cairo';}
+  .req-date{font-size:11.5px; color:var(--muted-dim);}
+  .req-detail{display:flex; justify-content:space-between; font-size:13px; padding:6px 0; border-bottom:1px solid var(--hairline); color:var(--muted);}
+  .req-detail:last-of-type{border-bottom:none;}
+  .req-detail span:last-child{color:var(--sand); direction:ltr; unicode-bidi:isolate;}
+  .req-actions{display:flex; gap:10px; margin-top:14px;}
+  .req-btn{flex:1; border:none; border-radius:10px; padding:11px; font-size:13.5px; font-weight:700; font-family:inherit;}
+  .req-btn.approve{background:var(--mint); color:#0B2318;}
+  .req-btn.reject{background:transparent; border:1px solid var(--hairline); color:var(--rose);}
+  .req-btn:disabled{opacity:.5;}
 
   /* ---------- KPI hero ---------- */
   .kpi-grid{display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:14px; margin-bottom:34px;}
@@ -312,6 +328,17 @@
         </div>
       </section>
 
+      <!-- ===== Page 3: Requests ===== -->
+      <section class="page" id="page-requests">
+        <div class="section-head">
+          <div>
+            <h2>طلبات انضمام جديدة</h2>
+            <p>راجع بيانات التاجر واقبل أو ارفض — القبول بيفعّل المتجر فورًا</p>
+          </div>
+        </div>
+        <div id="requests-list"></div>
+      </section>
+
     </div>
   </main>
 
@@ -323,6 +350,11 @@
     <button class="nav-btn" data-page="page-merchants">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v6H3z"/><path d="M3 12h18v9H3z"/><path d="M8 12v9M16 12v9"/></svg>
       التجار
+    </button>
+    <button class="nav-btn" data-page="page-requests">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+      طلبات
+      <span class="nav-badge" id="requests-badge">0</span>
     </button>
   </nav>
 </div>
@@ -449,6 +481,7 @@ async function loadDashboard(){
   renderKPIs();
   renderRibbon();
   renderTable();
+  loadRequests();
 
   document.getElementById('loader').style.display='none';
   document.getElementById('content').style.display='block';
@@ -551,6 +584,66 @@ function renderTable(filter=''){
 }
 
 document.getElementById('search').addEventListener('input', (e)=> renderTable(e.target.value));
+
+// ---------- merchant requests ----------
+async function loadRequests(){
+  const { data, error } = await sb.from('merchant_requests')
+    .select('*')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false });
+
+  if(error){ console.error(error); return; }
+
+  const badge = document.getElementById('requests-badge');
+  if(data.length > 0){ badge.textContent = data.length; badge.classList.add('show'); }
+  else { badge.classList.remove('show'); }
+
+  const list = document.getElementById('requests-list');
+  list.innerHTML = data.map(r=>`
+    <div class="request-card" data-id="${r.id}">
+      <div class="req-top">
+        <span class="req-name">${r.restaurant_name}</span>
+        <span class="req-date">${new Date(r.created_at).toLocaleDateString('ar-EG')}</span>
+      </div>
+      <div class="req-detail"><span>رابط المنيو المقترح</span><span>?r=${r.desired_slug}</span></div>
+      <div class="req-detail"><span>واتساب</span><span>${r.whatsapp}</span></div>
+      <div class="req-detail"><span>إيميل الدخول</span><span>${r.owner_email}</span></div>
+      <div class="req-actions">
+        <button class="req-btn approve" data-action="approve">✓ قبول وتفعيل</button>
+        <button class="req-btn reject" data-action="reject">✕ رفض</button>
+      </div>
+    </div>
+  `).join('') || `<div class="empty-state">مفيش طلبات جديدة دلوقتي</div>`;
+
+  list.querySelectorAll('.request-card').forEach(card=>{
+    const id = card.dataset.id;
+    card.querySelector('[data-action="approve"]').addEventListener('click', ()=>handleRequestAction(id, 'approve', card));
+    card.querySelector('[data-action="reject"]').addEventListener('click', ()=>handleRequestAction(id, 'reject', card));
+  });
+}
+
+async function handleRequestAction(id, action, card){
+  const btns = card.querySelectorAll('.req-btn');
+  btns.forEach(b=>b.disabled = true);
+
+  if(action === 'approve'){
+    const { error } = await sb.rpc('approve_merchant_request', { request_id: id });
+    if(error){
+      alert('حصل خطأ أثناء القبول: ' + error.message);
+      btns.forEach(b=>b.disabled = false);
+      return;
+    }
+    await loadDashboard(); // refresh merchant stats/ribbon/table with the new restaurant
+  } else {
+    const { error } = await sb.rpc('reject_merchant_request', { request_id: id });
+    if(error){
+      alert('حصل خطأ أثناء الرفض: ' + error.message);
+      btns.forEach(b=>b.disabled = false);
+      return;
+    }
+  }
+  loadRequests();
+}
 
 // ---------- bottom nav ----------
 document.querySelectorAll('.nav-btn').forEach(btn=>{

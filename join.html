@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>منجز — انضم كتاجر</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --ink-950:#151311; --ink-900:#1E1B17; --ink-850:#242019; --hairline:#332D22;
+    --ember:#FF6B00; --ember-600:#E35A00; --ember-glow:rgba(255,107,0,.18);
+    --sand:#F4EFE7; --muted:#9C9488; --mint:#3ECF8E; --mint-dim:rgba(62,207,142,.14);
+    --rose:#FF5C5C; --rose-dim:rgba(255,92,92,.14);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0; background:var(--ink-950); color:var(--sand); font-family:'IBM Plex Sans Arabic',sans-serif; min-height:100vh;}
+  h1,h2,.display{font-family:'Cairo',sans-serif;}
+  :focus-visible{outline:2px solid var(--ember); outline-offset:2px; border-radius:6px;}
+
+  .wrap{
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
+    background: radial-gradient(circle at 15% 10%, var(--ember-glow), transparent 45%),
+                radial-gradient(circle at 90% 85%, rgba(62,207,142,.08), transparent 40%),
+                var(--ink-950);
+  }
+  .card{width:100%; max-width:440px; background:var(--ink-900); border:1px solid var(--hairline); border-radius:20px; padding:32px 26px; box-shadow:0 30px 60px -20px rgba(0,0,0,.6);}
+  .brand-mark{width:52px; height:52px; border-radius:14px; background:var(--ember); display:flex; align-items:center; justify-content:center; font-family:'Cairo'; font-weight:900; font-size:20px; color:#fff; margin-bottom:16px;}
+  h1{font-size:21px; font-weight:800; margin:0 0 6px;}
+  p.sub{color:var(--muted); font-size:13.5px; margin:0 0 24px; line-height:1.7;}
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-size:13px; color:var(--muted); margin-bottom:6px;}
+  .field input, .field textarea{width:100%; background:var(--ink-850); border:1px solid var(--hairline); color:var(--sand); border-radius:10px; padding:12px 14px; font-size:14.5px; font-family:inherit;}
+  .field input:focus, .field textarea:focus{border-color:var(--ember);}
+  .field .hint{font-size:11.5px; color:var(--muted); margin-top:5px;}
+  .slug-preview{font-size:12px; color:var(--ember); margin-top:5px; direction:ltr; text-align:right; unicode-bidi:isolate;}
+  .btn-primary{width:100%; background:var(--ember); color:#fff; border:none; border-radius:10px; padding:13px; font-size:15px; font-weight:700; margin-top:8px;}
+  .btn-primary:hover{background:var(--ember-600);}
+  .btn-primary:disabled{opacity:.6;}
+  .msg{border-radius:10px; padding:11px 13px; font-size:13px; margin-bottom:14px; display:none;}
+  .msg.error{background:var(--rose-dim); color:var(--rose); border:1px solid rgba(255,92,92,.3);}
+  .success-box{text-align:center; padding:10px 0;}
+  .success-box .icon{width:56px; height:56px; border-radius:50%; background:var(--mint-dim); display:flex; align-items:center; justify-content:center; margin:0 auto 16px; font-size:26px;}
+  .success-box h2{font-size:18px; margin:0 0 10px;}
+  .success-box p{color:var(--muted); font-size:13.5px; line-height:1.8;}
+  #form-view.hidden, #success-view{display:none;}
+  #success-view.active{display:block;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div id="form-view">
+      <div class="brand-mark">Mz</div>
+      <h1>انضم كتاجر على منجز</h1>
+      <p class="sub">املأ بياناتك وهنراجع طلبك، وبمجرد الموافقة تقدر تدخل لوحة التحكم بتاعتك بنفس الإيميل والباسورد اللي هتسجلهم دلوقتي.</p>
+
+      <div class="msg error" id="form-error"></div>
+
+      <form id="request-form">
+        <div class="field">
+          <label>اسم المطعم / المحل</label>
+          <input type="text" id="restaurant-name" required>
+          <div class="slug-preview" id="slug-preview"></div>
+        </div>
+        <div class="field">
+          <label>رقم الواتساب</label>
+          <input type="tel" id="whatsapp" placeholder="01xxxxxxxxx" required>
+        </div>
+        <div class="field">
+          <label>البريد الإلكتروني (هتستخدمه للدخول)</label>
+          <input type="email" id="email" required>
+        </div>
+        <div class="field">
+          <label>كلمة المرور (اختارها بنفسك)</label>
+          <input type="password" id="password" minlength="6" required>
+          <div class="hint">6 أحرف على الأقل</div>
+        </div>
+        <button type="submit" class="btn-primary" id="submit-btn">إرسال الطلب</button>
+      </form>
+    </div>
+
+    <div id="success-view">
+      <div class="success-box">
+        <div class="icon">✅</div>
+        <h2>تم استلام طلبك بنجاح</h2>
+        <p>هنراجع بياناتك، وفور الموافقة تقدر تدخل لوحة التحكم بتاعتك بنفس الإيميل والباسورد اللي سجلتهم دلوقتي.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const sb = supabase.createClient(
+  "https://pcmyugeqveyjnappulng.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBjbXl1Z2VxdmV5am5hcHB1bG5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNjU0NDAsImV4cCI6MjA5Njc0MTQ0MH0.uwn0X4CvNRW38FGh_0rYD9KjBRM19CydXucfBsCDYeo"
+);
+
+function slugify(name){
+  return name.trim()
+    .replace(/[^\u0621-\u064Aa-zA-Z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .toLowerCase();
+}
+
+const nameInput = document.getElementById('restaurant-name');
+const slugPreview = document.getElementById('slug-preview');
+nameInput.addEventListener('input', ()=>{
+  const s = slugify(nameInput.value);
+  slugPreview.textContent = s ? ('رابط منيوك سيكون: ?r=' + s) : '';
+});
+
+document.getElementById('request-form').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const btn = document.getElementById('submit-btn');
+  const errBox = document.getElementById('form-error');
+  errBox.style.display = 'none';
+
+  const restaurantName = nameInput.value.trim();
+  const whatsapp = document.getElementById('whatsapp').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const desiredSlug = slugify(restaurantName);
+
+  if(!desiredSlug){
+    errBox.textContent = 'من فضلك اكتب اسم مطعم صحيح';
+    errBox.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true; btn.textContent = 'جاري الإرسال...';
+
+  const { data: signUpData, error: signUpError } = await sb.auth.signUp({ email, password });
+  if(signUpError){
+    errBox.textContent = signUpError.message.includes('already registered')
+      ? 'الإيميل ده مسجل قبل كده، جرب تدخل من الداشبورد أو استخدم إيميل تاني'
+      : 'حصل خطأ أثناء إنشاء الحساب، تأكد من البيانات وحاول تاني';
+    errBox.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'إرسال الطلب';
+    return;
+  }
+
+  const userId = signUpData.user ? signUpData.user.id : null;
+
+  const { error: insertError } = await sb.from('merchant_requests').insert({
+    user_id: userId,
+    restaurant_name: restaurantName,
+    desired_slug: desiredSlug,
+    whatsapp: whatsapp,
+    owner_email: email
+  });
+
+  if(insertError){
+    errBox.textContent = 'اتسجل حسابك لكن حصلت مشكلة في إرسال الطلب، كلم الدعم';
+    errBox.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'إرسال الطلب';
+    return;
+  }
+
+  document.getElementById('form-view').classList.add('hidden');
+  document.getElementById('success-view').classList.add('active');
+});
+</script>
+</body>
+</html>
