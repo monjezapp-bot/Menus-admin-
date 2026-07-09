@@ -260,6 +260,56 @@
 
   .empty-state{text-align:center; padding:60px 20px; color:var(--muted);}
   .loader{display:flex; align-items:center; justify-content:center; min-height:60vh; color:var(--muted); font-size:14px;}
+
+  /* ---------- Risk & Alerts center ---------- */
+  .alerts-toolbar{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;}
+  .alerts-toolbar select{
+    background:var(--ink-900); border:1px solid var(--hairline); color:var(--sand); border-radius:10px;
+    padding:9px 12px; font-size:13px; font-family:inherit;
+  }
+  .alert-card{background:var(--ink-900); border:1px solid var(--hairline); border-inline-start:4px solid var(--muted-dim); border-radius:14px; padding:16px; margin-bottom:12px; transition:opacity .15s;}
+  .alert-card.sev-low{border-inline-start-color:var(--muted-dim);}
+  .alert-card.sev-medium{border-inline-start-color:#F5C244;}
+  .alert-card.sev-high{border-inline-start-color:var(--ember);}
+  .alert-card.sev-critical{border-inline-start-color:var(--rose);}
+  .alert-card.resolved{opacity:.5;}
+  .alert-top{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px;}
+  .alert-type{font-weight:800; font-size:14px; font-family:'Cairo';}
+  .alert-sev-badge{font-size:11px; font-weight:700; padding:3px 10px; border-radius:99px;}
+  .alert-sev-badge.low{color:var(--muted); background:var(--ink-850);}
+  .alert-sev-badge.medium{color:#F5C244; background:rgba(245,194,68,.14);}
+  .alert-sev-badge.high{color:var(--ember); background:var(--ember-glow);}
+  .alert-sev-badge.critical{color:var(--rose); background:var(--rose-dim);}
+  .alert-meta{font-size:12px; color:var(--muted); margin-bottom:10px;}
+  .alert-details{background:var(--ink-850); border-radius:10px; padding:10px 12px; font-size:12.5px; color:var(--muted); margin-bottom:12px; direction:ltr; text-align:right; unicode-bidi:isolate; word-break:break-word;}
+  .alert-details div{padding:2px 0;}
+  .alert-details b{color:var(--sand); font-weight:600;}
+  .alert-actions{display:flex; gap:10px;}
+  .alert-resolve-btn{flex:none; background:var(--mint); color:#0B2318; border:none; border-radius:9px; padding:9px 16px; font-size:13px; font-weight:700;}
+  .alert-resolve-btn:disabled{opacity:.5;}
+  .alert-resolved-tag{font-size:12px; color:var(--mint); font-weight:700;}
+  .new-alert-toast{
+    position:fixed; top:16px; inset-inline-end:16px; z-index:60; background:var(--ink-900); border:1px solid var(--ember);
+    border-radius:12px; padding:12px 16px; font-size:13px; box-shadow:0 20px 40px -10px rgba(0,0,0,.6);
+    display:flex; align-items:center; gap:10px; max-width:320px; transform:translateY(-12px); opacity:0; transition:all .25s;
+  }
+  .new-alert-toast.show{transform:translateY(0); opacity:1;}
+  .overview-alert-banner{
+    display:none; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
+    background:linear-gradient(135deg, rgba(255,92,92,.14), rgba(255,92,92,.06)); border:1px solid rgba(255,92,92,.35);
+    border-radius:16px; padding:16px 18px; margin-bottom:22px; cursor:pointer; transition:border-color .15s;
+  }
+  .overview-alert-banner:hover{border-color:var(--rose);}
+  .overview-alert-banner.show{display:flex;}
+  .oab-left{display:flex; align-items:center; gap:12px;}
+  .oab-icon{width:38px; height:38px; border-radius:11px; background:var(--rose-dim); display:flex; align-items:center; justify-content:center; flex:none; font-size:18px;}
+  .oab-title{font-weight:800; font-size:14.5px; font-family:'Cairo'; color:var(--sand);}
+  .oab-sub{font-size:12.5px; color:var(--muted); margin-top:2px;}
+  .oab-chip{font-size:11.5px; font-weight:700; padding:3px 10px; border-radius:99px; margin-inline-start:6px;}
+  .oab-chip.critical{color:var(--rose); background:var(--rose-dim);}
+  .oab-chip.high{color:var(--ember); background:var(--ember-glow);}
+  .oab-chip.medium{color:#F5C244; background:rgba(245,194,68,.14);}
+  .oab-arrow{color:var(--rose); font-size:20px; flex:none;}
   @media (prefers-reduced-motion: reduce){ *{transition:none !important; animation:none !important;} }
 </style>
 </head>
@@ -304,6 +354,16 @@
 
       <!-- ===== Page 1: Overview ===== -->
       <section class="page active" id="page-overview">
+        <div class="overview-alert-banner" id="overview-alert-banner">
+          <div class="oab-left">
+            <div class="oab-icon">⚠️</div>
+            <div>
+              <div class="oab-title" id="oab-title">في تنبيهات محتاجة مراجعتك</div>
+              <div class="oab-sub" id="oab-sub"></div>
+            </div>
+          </div>
+          <div class="oab-arrow">←</div>
+        </div>
         <div class="kpi-grid">
           <div class="kpi-card kpi-hero">
             <div class="kpi-label">إجمالي مبيعات الشهر الحالي</div>
@@ -400,6 +460,39 @@
         <button class="save-prices-btn" id="save-prices-btn">حفظ الأسعار</button>
       </section>
 
+      <!-- ===== Page 5: Risk & Alerts Center ===== -->
+      <section class="page" id="page-alerts">
+        <div class="section-head">
+          <div>
+            <h2>مركز المخاطر والتنبيهات</h2>
+            <p>كل التنبيهات الأمنية والمالية المكتشفة تلقائيًا عبر المنصة</p>
+          </div>
+        </div>
+        <div class="alerts-toolbar">
+          <select id="alert-filter-type">
+            <option value="">كل الأنواع</option>
+            <option value="manual_product_price_edit">تعديل يدوي لسعر منتج</option>
+            <option value="manual_customer_balance_edit">تعديل يدوي لرصيد عميل</option>
+            <option value="suspicious_order_frequency">طلبات مشبوهة متكررة</option>
+            <option value="auth_failed_attempts">محاولات دخول فاشلة</option>
+            <option value="payment_error_spike">ارتفاع أخطاء الدفع</option>
+          </select>
+          <select id="alert-filter-severity">
+            <option value="">كل مستويات الخطورة</option>
+            <option value="critical">حرج</option>
+            <option value="high">مرتفع</option>
+            <option value="medium">متوسط</option>
+            <option value="low">منخفض</option>
+          </select>
+          <select id="alert-filter-status">
+            <option value="unresolved">غير معالج</option>
+            <option value="resolved">تم الاطلاع/معالجة</option>
+            <option value="">الكل</option>
+          </select>
+        </div>
+        <div id="alerts-list"></div>
+      </section>
+
     </div>
   </main>
 
@@ -420,6 +513,11 @@
     <button class="nav-btn" data-page="page-pricing">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
       الأسعار
+    </button>
+    <button class="nav-btn" data-page="page-alerts">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+      المخاطر
+      <span class="nav-badge" id="alerts-badge">0</span>
     </button>
   </nav>
 </div>
@@ -560,6 +658,8 @@ async function loadDashboard(){
   renderTable();
   loadRequests();
   loadPricingInputs();
+  loadAlerts();
+  subscribeToAlertsRealtime();
 
   document.getElementById('loader').style.display='none';
   document.getElementById('content').style.display='block';
@@ -766,6 +866,169 @@ function loadPricingInputs(){
   });
 }
 
+// ---------- risk & alerts center ----------
+const ALERT_TYPE_LABELS = {
+  manual_product_price_edit:'تعديل يدوي لسعر منتج',
+  manual_customer_balance_edit:'تعديل يدوي لرصيد عميل',
+  suspicious_order_frequency:'طلبات مشبوهة متكررة',
+  auth_failed_attempts:'محاولات دخول فاشلة',
+  payment_error_spike:'ارتفاع أخطاء الدفع'
+};
+const ALERT_SEV_LABELS = { low:'منخفض', medium:'متوسط', high:'مرتفع', critical:'حرج' };
+const ALERT_SEV_ORDER = { critical:0, high:1, medium:2, low:3 };
+
+state.alerts = [];
+
+async function loadAlerts(){
+  const { data, error } = await sb.from('admin_alerts').select('*').order('created_at', { ascending:false }).limit(300);
+  if(error){ console.error(error); return; }
+  state.alerts = data || [];
+  renderAlertsBadge();
+  renderOverviewBanner();
+  renderAlerts();
+}
+
+function renderOverviewBanner(){
+  const unresolved = state.alerts.filter(a=>!a.resolved);
+  const banner = document.getElementById('overview-alert-banner');
+  if(unresolved.length === 0){ banner.classList.remove('show'); return; }
+
+  const bySev = { critical:0, high:0, medium:0, low:0 };
+  unresolved.forEach(a=> bySev[a.severity] = (bySev[a.severity]||0) + 1);
+
+  document.getElementById('oab-title').textContent =
+    `عندك ${unresolved.length} تنبيه${unresolved.length>1?'ات':''} محتاجة مراجعتك`;
+
+  const chips = ['critical','high','medium'].filter(s=>bySev[s]>0)
+    .map(s=>`<span class="oab-chip ${s}">${ALERT_SEV_LABELS[s]}: ${bySev[s]}</span>`).join('');
+  document.getElementById('oab-sub').innerHTML = 'اضغط لمراجعة مركز المخاطر' + (chips ? ' — ' + chips : '');
+
+  banner.classList.add('show');
+}
+
+document.getElementById('overview-alert-banner').addEventListener('click', ()=>{
+  activatePage('page-alerts');
+  const targetHash = PAGE_TO_HASH['page-alerts'];
+  if(history.state && history.state.page) history.replaceState({page:true}, '', '#'+targetHash);
+  else history.pushState({page:true}, '', '#'+targetHash);
+});
+
+
+function renderAlertsBadge(){
+  const unresolved = state.alerts.filter(a=>!a.resolved).length;
+  const badge = document.getElementById('alerts-badge');
+  if(unresolved > 0){ badge.textContent = unresolved; badge.classList.add('show'); }
+  else{ badge.classList.remove('show'); }
+}
+
+function restaurantName(id){
+  const r = state.restaurants.find(r=>r.id===id);
+  return r ? r.name : '—';
+}
+
+function alertDetailsRows(a){
+  const d = a.details || {};
+  const rows = [];
+  if(a.restaurant_id) rows.push(['المتجر', restaurantName(a.restaurant_id)]);
+  if(d.product_name) rows.push(['المنتج', d.product_name]);
+  if(d.customer_name || d.customer_phone) rows.push(['العميل', [d.customer_name, d.customer_phone].filter(Boolean).join(' — ')]);
+  if(d.field) rows.push(['الحقل', d.field]);
+  if(d.old_price !== undefined) rows.push(['السعر القديم', fmt(d.old_price) + ' ج.م']);
+  if(d.new_price !== undefined) rows.push(['السعر الجديد', fmt(d.new_price) + ' ج.م']);
+  if(d.old_value !== undefined) rows.push(['القيمة القديمة', d.old_value]);
+  if(d.new_value !== undefined) rows.push(['القيمة الجديدة', d.new_value]);
+  if(d.customer_phone_frequency) rows.push(['رقم الهاتف', d.customer_phone_frequency]);
+  if(d.orders_count) rows.push(['عدد الطلبات', d.orders_count]);
+  if(d.email) rows.push(['البريد', d.email]);
+  if(d.attempts) rows.push(['عدد المحاولات', d.attempts]);
+  if(d.error_count) rows.push(['عدد الأخطاء', d.error_count]);
+  return rows;
+}
+
+function renderAlerts(){
+  const typeF = document.getElementById('alert-filter-type').value;
+  const sevF = document.getElementById('alert-filter-severity').value;
+  const statusF = document.getElementById('alert-filter-status').value;
+
+  let rows = [...state.alerts];
+  if(typeF) rows = rows.filter(a=>a.type===typeF);
+  if(sevF) rows = rows.filter(a=>a.severity===sevF);
+  if(statusF==='resolved') rows = rows.filter(a=>a.resolved);
+  else if(statusF==='unresolved') rows = rows.filter(a=>!a.resolved);
+
+  rows.sort((a,b)=>{
+    if(a.resolved !== b.resolved) return a.resolved ? 1 : -1;
+    return new Date(b.created_at) - new Date(a.created_at);
+  });
+
+  const list = document.getElementById('alerts-list');
+  list.innerHTML = rows.map(a=>{
+    const details = alertDetailsRows(a);
+    return `
+    <div class="alert-card sev-${a.severity} ${a.resolved?'resolved':''}" data-id="${a.id}">
+      <div class="alert-top">
+        <span class="alert-type">${ALERT_TYPE_LABELS[a.type] || a.type}</span>
+        <span class="alert-sev-badge ${a.severity}">${ALERT_SEV_LABELS[a.severity] || a.severity}</span>
+      </div>
+      <div class="alert-meta">${new Date(a.created_at).toLocaleString('ar-EG')}</div>
+      ${details.length ? `<div class="alert-details">${details.map(([k,v])=>`<div><b>${k}:</b> ${v}</div>`).join('')}</div>` : ''}
+      <div class="alert-actions">
+        ${a.resolved
+          ? `<span class="alert-resolved-tag">✓ تم الاطلاع/المعالجة</span>`
+          : `<button class="alert-resolve-btn" data-id="${a.id}">تم الاطلاع/معالجة</button>`}
+      </div>
+    </div>`;
+  }).join('') || `<div class="empty-state">مفيش تنبيهات مطابقة للفلتر ده 👌</div>`;
+
+  list.querySelectorAll('.alert-resolve-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=> resolveAlert(btn.dataset.id, btn));
+  });
+}
+
+async function resolveAlert(id, btn){
+  btn.disabled = true; btn.textContent = '...';
+  const { data: { session } } = await sb.auth.getSession();
+  const { error } = await sb.from('admin_alerts')
+    .update({ resolved:true, resolved_at:new Date().toISOString(), resolved_by: session.user.id })
+    .eq('id', id);
+  if(error){ console.error(error); btn.disabled=false; btn.textContent='تم الاطلاع/معالجة'; return; }
+  const a = state.alerts.find(x=>x.id===id);
+  if(a){ a.resolved = true; }
+  renderAlertsBadge();
+  renderOverviewBanner();
+  renderAlerts();
+}
+
+['alert-filter-type','alert-filter-severity','alert-filter-status'].forEach(id=>{
+  document.getElementById(id).addEventListener('change', ()=> renderAlerts());
+});
+
+let alertsRealtimeChannel = null;
+function subscribeToAlertsRealtime(){
+  if(alertsRealtimeChannel) return;
+  alertsRealtimeChannel = sb.channel('admin-alerts-live')
+    .on('postgres_changes', { event:'INSERT', schema:'public', table:'admin_alerts' }, (payload)=>{
+      state.alerts.unshift(payload.new);
+      renderAlertsBadge();
+      renderOverviewBanner();
+      renderAlerts();
+      showNewAlertToast(payload.new);
+    })
+    .subscribe();
+}
+
+function showNewAlertToast(a){
+  const toast = document.createElement('div');
+  toast.className = 'new-alert-toast';
+  toast.innerHTML = `⚠️ تنبيه جديد: ${ALERT_TYPE_LABELS[a.type] || a.type}`;
+  document.body.appendChild(toast);
+  requestAnimationFrame(()=> toast.classList.add('show'));
+  setTimeout(()=>{
+    toast.classList.remove('show');
+    setTimeout(()=> toast.remove(), 300);
+  }, 6000);
+}
+
 document.getElementById('save-prices-btn').addEventListener('click', async ()=>{
   const btn = document.getElementById('save-prices-btn');
   btn.disabled = true; btn.textContent = 'جاري الحفظ...';
@@ -793,8 +1056,8 @@ document.getElementById('save-prices-btn').addEventListener('click', async ()=>{
 });
 
 // ---------- bottom nav (with proper back-button history) ----------
-const PAGE_TO_HASH = { 'page-overview':'overview', 'page-merchants':'merchants', 'page-requests':'requests', 'page-pricing':'pricing' };
-const HASH_TO_PAGE = { 'overview':'page-overview', 'merchants':'page-merchants', 'requests':'page-requests', 'pricing':'page-pricing' };
+const PAGE_TO_HASH = { 'page-overview':'overview', 'page-merchants':'merchants', 'page-requests':'requests', 'page-pricing':'pricing', 'page-alerts':'alerts' };
+const HASH_TO_PAGE = { 'overview':'page-overview', 'merchants':'page-merchants', 'requests':'page-requests', 'pricing':'page-pricing', 'alerts':'page-alerts' };
 
 function activatePage(pageId){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
