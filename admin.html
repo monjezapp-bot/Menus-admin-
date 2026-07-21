@@ -458,6 +458,23 @@
         </div>
 
         <button class="save-prices-btn" id="save-prices-btn">حفظ الأسعار</button>
+
+        <div class="plan-group" style="margin-top:22px">
+          <h3>الهامش الربحي والخصومات</h3>
+          <p style="font-size:12px;color:#8a8a8a;margin:-4px 0 10px">الهامش بيتضاف على تكلفة الـ AI الحقيقية قبل ما التاجر يشوفها في لوحته. الخصم العام بيتطبق على كل التجار إلا لو حددت خصم فردي لتاجر بعينه تحت.</p>
+          <div class="plan-row"><label>الهامش الربحي على تكلفة الـ AI</label><div class="price-input-wrap"><input type="number" id="settings-markup" enterkeyhint="done"><span class="unit">%</span></div></div>
+          <div class="plan-row"><label>الخصم العام على كل التجار</label><div class="price-input-wrap"><input type="number" id="settings-discount" enterkeyhint="done"><span class="unit">%</span></div></div>
+          <button class="save-prices-btn" id="save-settings-btn">حفظ الإعدادات</button>
+        </div>
+
+        <div class="plan-group" style="margin-top:22px">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px">
+            <h3 style="margin:0">فواتير التجار</h3>
+            <button class="save-prices-btn" id="run-maintenance-btn" style="width:auto; padding:8px 14px; font-size:12.5px; margin:0">تشغيل فحص القفل/الأرشفة الآن</button>
+          </div>
+          <p style="font-size:12px;color:#8a8a8a;margin:0 0 10px">أي تاجر فات ميعاد فاتورته بيتقفل حسابه تلقائيًا، ولو فضل مقفول شهرين من غير دفع بيتحوّل لأرشيف (بيانات العملاء وصور المنتجات بتفضل محفوظة، بس المتجر بيقفل عن الوصول).</p>
+          <div id="billing-overview-list"></div>
+        </div>
       </section>
 
       <!-- ===== Page 5: Risk & Alerts Center ===== -->
@@ -658,6 +675,7 @@ async function loadDashboard(){
   renderTable();
   loadRequests();
   loadPricingInputs();
+  loadBillingSettingsAndOverview();
   loadAlerts();
   subscribeToAlertsRealtime();
 
@@ -865,6 +883,102 @@ function loadPricingInputs(){
     input.value = state.plans[key] || 0;
   });
 }
+
+// ---------- platform settings + merchant billing overview ----------
+const BILLING_CYCLE_LABELS = { monthly:'شهري', quarterly:'كل 3 شهور', biannual:'كل 6 شهور', yearly:'سنوي' };
+const BILLING_PLAN_LABELS = { single_branch:'فرع واحد', multi_branch:'أكتر من فرع' };
+const MERCHANT_STATUS_LABELS = { active:'نشط', locked:'مقفول', archived:'متأرشف', null:'بدون باقة' };
+
+async function loadBillingSettingsAndOverview(){
+  const { data: settings, error: sErr } = await sb.from('platform_settings').select('*').eq('id', 1).maybeSingle();
+  if(!sErr && settings){
+    document.getElementById('settings-markup').value = settings.ai_cost_markup_percent || 0;
+    document.getElementById('settings-discount').value = settings.global_discount_percent || 0;
+  }
+  await loadBillingOverview();
+}
+
+async function loadBillingOverview(){
+  const list = document.getElementById('billing-overview-list');
+  list.innerHTML = '<p style="font-size:12px;color:#8a8a8a">جاري التحميل...</p>';
+
+  const { data, error } = await sb.rpc('admin_get_merchant_billing_overview');
+  if(error){ list.innerHTML = '<p style="font-size:12px;color:#c0392b">تعذر تحميل الفواتير: '+error.message+'</p>'; return; }
+
+  if(!data || !data.length){ list.innerHTML = '<p style="font-size:12px;color:#8a8a8a">مفيش تجار مسجلين لسه.</p>'; return; }
+
+  list.innerHTML = data.map(m=>{
+    const statusKey = m.is_locked ? 'locked' : (m.subscription_status || 'null');
+    const badgeColor = statusKey==='archived' ? '#c0392b' : (statusKey==='locked' ? '#d97706' : (statusKey==='active' ? '#16a34a' : '#8a8a8a'));
+    const planTxt = m.subscription_plan ? (BILLING_PLAN_LABELS[m.subscription_plan]||m.subscription_plan) + ' / ' + (BILLING_CYCLE_LABELS[m.billing_cycle]||m.billing_cycle) : 'بدون باقة';
+    return `
+      <div style="border:1px solid #eee;border-radius:12px;padding:12px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <strong style="font-size:13.5px">${m.name}</strong>
+          <span style="font-size:11px;font-weight:700;color:#fff;background:${badgeColor};padding:2px 10px;border-radius:20px">${MERCHANT_STATUS_LABELS[statusKey]||statusKey}</span>
+        </div>
+        <p style="font-size:12px;color:#666;margin:0 0 4px">${planTxt}</p>
+        <p style="font-size:12px;color:#666;margin:0 0 8px">
+          السعر الأساسي: ${m.base_price ?? '—'} ج.م
+          ${m.discount_percent>0 ? ` — بعد خصم ${m.discount_percent}%: <strong>${m.effective_price} ج.م</strong>` : ''}
+          ${m.next_billing_date ? ` — ميعاد الفاتورة الجاي: ${new Date(m.next_billing_date).toLocaleDateString('ar-EG')}` : ''}
+        </p>
+        ${m.locked_at ? `<p style="font-size:11.5px;color:#d97706;margin:0 0 8px">مقفول من ${m.days_locked} يوم — لو فضل مقفول لحد ${new Date(m.scheduled_deletion_at).toLocaleDateString('ar-EG')} هيتأرشف تلقائي</p>` : ''}
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <label style="font-size:11.5px;color:#8a8a8a">خصم فردي:</label>
+          <input type="number" value="${m.discount_percent||''}" placeholder="0" data-discount-for="${m.restaurant_id}" style="width:60px;padding:4px 6px;border:1px solid #ddd;border-radius:6px;font-size:12px">
+          <button data-save-discount="${m.restaurant_id}" style="font-size:11.5px;padding:4px 10px;border-radius:6px;border:none;background:#f2f2f2;font-weight:700">حفظ الخصم</button>
+          ${statusKey==='archived' || statusKey==='locked' ? `<button data-reactivate="${m.restaurant_id}" style="font-size:11.5px;padding:4px 10px;border-radius:6px;border:none;background:#16a34a;color:#fff;font-weight:700">إعادة تفعيل (30 يوم)</button>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+
+  list.querySelectorAll('[data-save-discount]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const rid = btn.dataset.saveDiscount;
+      const input = list.querySelector(`[data-discount-for="${rid}"]`);
+      const val = input.value === '' ? null : Number(input.value);
+      btn.disabled = true; btn.textContent = '...';
+      const { error } = await sb.rpc('admin_set_merchant_discount', { p_restaurant_id: rid, p_discount: val });
+      if(error) alert('حصل خطأ: ' + error.message);
+      await loadBillingOverview();
+    });
+  });
+
+  list.querySelectorAll('[data-reactivate]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const rid = btn.dataset.reactivate;
+      if(!confirm('تأكيد إعادة تفعيل الحساب وتحديد ميعاد فاتورة بعد 30 يوم من دلوقتي؟')) return;
+      const next = new Date(); next.setDate(next.getDate()+30);
+      btn.disabled = true; btn.textContent = '...';
+      const { error } = await sb.rpc('admin_reactivate_merchant', { p_restaurant_id: rid, p_next_billing_date: next.toISOString() });
+      if(error) alert('حصل خطأ: ' + error.message);
+      await loadBillingOverview();
+    });
+  });
+}
+
+document.getElementById('save-settings-btn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('save-settings-btn');
+  btn.disabled = true; btn.textContent = 'جاري الحفظ...';
+  const markup = Number(document.getElementById('settings-markup').value) || 0;
+  const discount = Number(document.getElementById('settings-discount').value) || 0;
+  const { error } = await sb.rpc('admin_update_platform_settings', { p_markup: markup, p_discount: discount });
+  btn.disabled = false; btn.textContent = 'حفظ الإعدادات';
+  if(error){ alert('حصل خطأ: ' + error.message); return; }
+  await loadBillingOverview();
+});
+
+document.getElementById('run-maintenance-btn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('run-maintenance-btn');
+  btn.disabled = true; btn.textContent = 'جاري الفحص...';
+  const { data, error } = await sb.rpc('run_subscription_maintenance');
+  btn.disabled = false; btn.textContent = 'تشغيل فحص القفل/الأرشفة الآن';
+  if(error){ alert('حصل خطأ: ' + error.message); return; }
+  const r = data && data[0];
+  alert(`تم: ${r?.newly_locked||0} حساب اتقفل جديد، ${r?.newly_archived||0} حساب اتأرشف.`);
+  await loadBillingOverview();
+});
 
 // ---------- risk & alerts center ----------
 const ALERT_TYPE_LABELS = {
